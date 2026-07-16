@@ -26,6 +26,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ipython>=9.6.0",
+    "matplotlib"
 ]
 
 [build-system]
