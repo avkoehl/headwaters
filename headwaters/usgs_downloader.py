@@ -15,7 +15,7 @@ from shapely.geometry import Polygon, MultiPolygon
 import xarray as xr
 
 
-def download_huc_data(
+def fetch_huc(
     hucid: str,
     nhd_layer: str = "medium",
     crs: str = "EPSG:4326",

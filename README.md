@@ -1,11 +1,11 @@
 # headwaters
 
-Given a HUC ID, produce a DEM, flowlines, conditioned DEM, flow directions, and
-flow accumulation. Thin wrapper around pygeohydro/pynhd/py3dep (data download)
-and whitebox/pysheds (DEM conditioning, flow direction, flow accumulation).
+Fetch source data for a watershed from USGS services: the boundary, DEM, and
+NHD flowlines for a given HUC ID. Thin wrapper around the HyRiver stack
+(pygeohydro/pynhd/py3dep) — no terrain computation, no compiled dependencies.
 
 ```python
-from headwaters import get_headwaters
+from headwaters import fetch_huc
 
-dem, flowlines, conditioned_dem, flow_dir, flow_acc = get_headwaters("1805000203")
+dem, flowlines = fetch_huc("1805000203", crs="EPSG:3310")
 ```

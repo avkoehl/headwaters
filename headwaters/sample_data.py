@@ -4,7 +4,7 @@ import rioxarray
 import geopandas as gpd
 import xarray as xr
 
-from .usgs_downloader import download_huc_data
+from .usgs_downloader import fetch_huc
 
 CACHE_DIR = Path(user_cache_dir("headwaters"))
 
@@ -24,7 +24,7 @@ def load_sample_data() -> tuple[xr.DataArray, gpd.GeoDataFrame]:
 
     if not dem_path.exists() or not flowlines_path.exists():
         print(f"Sample data not found in cache. Downloading to {CACHE_DIR}...")
-        dem, flowlines = download_huc_data("1805000203", crs="EPSG:3310")
+        dem, flowlines = fetch_huc("1805000203", crs="EPSG:3310")
         dem.rio.to_raster(dem_path)
         flowlines.to_file(flowlines_path, driver="GPKG")
     else:
