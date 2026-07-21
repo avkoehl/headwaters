@@ -9,3 +9,7 @@ from headwaters import fetch_huc
 
 dem, flowlines = fetch_huc("1805000203", crs="EPSG:3310")
 ```
+
+![Watershed boundary, DEM, and NHD flowlines for a HUC12](assets/headwaters.png)
+
+<sub>Regenerate: `uv run --group example python examples/plot.py`</sub>
