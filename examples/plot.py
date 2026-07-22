@@ -1,7 +1,10 @@
 """Generate the README figure for headwaters.
 
-Live-downloads the source data for a single HUC12 and renders the three things
-headwaters fetches — watershed boundary, DEM, and NHD flowlines — as one map.
+Live-downloads the source data for a single HUC12 with fetch_huc and renders the
+DEM (hillshaded) with the NHD flowlines on top. Flowlines whose upstream end sits
+on the watershed boundary are dropped — a real headwater starts inside the basin,
+so a start-on-boundary reach is a clip artifact that otherwise seeds a spurious
+channel head (and a bogus secondary network) downstream in catchment.
 
 Run:
     uv run --group example python examples/plot.py
@@ -9,28 +12,42 @@ Run:
 
 from pathlib import Path
 
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LightSource
+from shapely.geometry import Point
 
-from headwaters.usgs_downloader import (
-    download_wbd_boundary,
-    download_nhd_flowlines,
-    download_3dep_dem,
-)
+from headwaters import fetch_huc
+from headwaters.usgs_downloader import download_wbd_boundary
 
 HUC = "180101080409"
 CRS = "EPSG:3310"
 DEM_RESOLUTION = 30
 NHD_LAYER = "medium"
+BOUNDARY_START_BUFFER = 20  # metres; drop reaches whose head is on the boundary
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 
 
+def drop_boundary_heads(flowlines: gpd.GeoDataFrame, boundary: gpd.GeoDataFrame):
+    """Drop flowlines whose upstream endpoint lies within
+    BOUNDARY_START_BUFFER metres of the watershed boundary."""
+    bline = boundary.union_all().boundary
+    starts = gpd.GeoSeries(
+        [Point(g.coords[0]) for g in flowlines.geometry],
+        crs=flowlines.crs,
+        index=flowlines.index,
+    )
+    return flowlines[starts.distance(bline) >= BOUNDARY_START_BUFFER]
+
+
 def main() -> None:
-    boundary = download_wbd_boundary(HUC)
-    flowlines = download_nhd_flowlines(boundary, layer=NHD_LAYER, crs=CRS)
-    dem = download_3dep_dem(boundary, DEM_RESOLUTION, CRS)
+    dem, flowlines = fetch_huc(
+        HUC, nhd_layer=NHD_LAYER, dem_resolution=DEM_RESOLUTION, crs=CRS
+    )
+    boundary = download_wbd_boundary(HUC).to_crs(CRS)
+    flowlines = drop_boundary_heads(flowlines, boundary)
 
     z = dem.values.astype(float)
     z = np.where(np.isfinite(z), z, np.nan)
